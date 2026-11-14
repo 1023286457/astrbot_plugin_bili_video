@@ -1,0 +1,4 @@
+# 钉钉原生视频消息依赖：imageio-ffmpeg 自带各平台静态 ffmpeg，
+# AstrBot 安装/更新插件时 pip 自动安装，无需系统安装、无需管理员权限。
+# 若 pip 安装失败，钉钉会自动降级为文件消息（不影响 QQ 官方等其他平台）。
+imageio-ffmpeg>=0.2.9

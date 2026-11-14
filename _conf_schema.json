@@ -1,0 +1,43 @@
+{
+  "max_duration_seconds": {
+    "description": "刷视频时长上限（秒）",
+    "type": "int",
+    "default": 180,
+    "hint": "/刷视频 只挑时长不超过该值的视频；搜视频由用户自己选，不受此限制（只受体积上限约束）。"
+  },
+  "wait_seconds": {
+    "description": "搜索列表等待时间（秒）",
+    "type": "int",
+    "default": 60,
+    "hint": "/搜视频 发出列表后等待回复序号的时长，超时自动取消；等待期间该会话的新消息会被本插件接管（与常见点歌插件一致）。"
+  },
+  "popular_pages": {
+    "description": "热门榜抓取页数",
+    "type": "int",
+    "default": 4,
+    "hint": "每页 50 条，默认 4 页约 200 条作为随机池；结果缓存 10 分钟，不会每条指令都抓一遍。"
+  },
+  "max_file_mb": {
+    "description": "单视频体积上限（MB）",
+    "type": "int",
+    "default": 90,
+    "hint": "声明体积超过上限的候选直接跳过换下一个，防止上传超时。"
+  },
+  "max_retries": {
+    "description": "失败换片重试次数",
+    "type": "int",
+    "default": 3,
+    "hint": "某个候选解析或下载失败时自动换下一个视频再试的次数。"
+  },
+  "download_timeout_seconds": {
+    "description": "下载超时（秒）",
+    "type": "int",
+    "default": 120
+  },
+  "cooldown_seconds": {
+    "description": "同会话冷却（秒）",
+    "type": "int",
+    "default": 20,
+    "hint": "同一会话两次 /刷视频 的最小间隔，防止刷屏触发 QQ 频控；只在发送成功后计时。"
+  }
+}
