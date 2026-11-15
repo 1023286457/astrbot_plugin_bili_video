@@ -1,9 +1,9 @@
-﻿name: astrbot_plugin_bili_video
+name: astrbot_plugin_bili_video
 display_name: B站刷视频
 desc: 发送 /刷视频 从B站热门榜随机挑一个短视频（默认不超过3分钟）/搜视频 关键词 按名字搜索短视频发到当前会话，无需登录、无需 ffmpeg
 short_desc: /刷视频 随机发B站热门短视频 /搜视频 关键词 搜索B站短视频
 author: 简单么么熊
-version: 1.0.1
+version: 1.0.2
 astrbot_version: ">=4.26.0"
 repo: https://github.com/1023286457/astrbot_plugin_bili_video
 support_platforms:

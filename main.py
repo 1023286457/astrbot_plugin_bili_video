@@ -19,7 +19,7 @@ from astrbot.core.utils.session_waiter import SessionController, session_waiter
 from .bili import BiliApiError, BiliVideo, BiliVideoClient
 
 PLUGIN_NAME = "astrbot_plugin_bili_video"
-PLUGIN_VERSION = "1.0.1"
+PLUGIN_VERSION = "1.0.2"
 SUPPORTED_PLATFORMS = {"qq_official", "qq_official_webhook", "dingtalk", "aiocqhttp"}
 DINGTALK_PLATFORM = "dingtalk"
 SEARCH_LIST_SIZE = 10
@@ -91,6 +91,20 @@ class BiliVideoPlugin(Star):
             max_duration=self._int_cfg("max_duration_seconds", 180),
         )
         return max_retries, max_file_mb, cooldown, download_timeout
+
+    def _dingtalk_send_mode(self) -> str:
+        """返回钉钉发送模式：video / file。"""
+        mode = str(self.config.get("dingtalk_send_mode", "video")).strip().lower()
+        return "file" if mode in {"file", "文件"} else "video"
+
+    def _send_limit_mb(self, event: AstrMessageEvent) -> int:
+        """钉钉文件模式使用独立的文件体积上限，其它情况使用视频上限。"""
+        if (
+            event.get_platform_name() == DINGTALK_PLATFORM
+            and self._dingtalk_send_mode() == "file"
+        ):
+            return self._int_cfg("max_file_send_mb", 90)
+        return self._int_cfg("max_file_mb", 90)
 
     # ------------------------------------------------------------------
     # ffmpeg 自动供给（钉钉原生视频消息需要适配器调用 ffmpeg 抽封面）
@@ -181,22 +195,31 @@ class BiliVideoPlugin(Star):
         钉钉的原生视频消息必须附带封面图（适配器用 ffmpeg 从视频抽帧）。
         主机没装 ffmpeg 时会先尝试 pip 静态 ffmpeg（自动供给）；仍不可用才
         降级为文件消息（mp4 文件卡片，钉钉内可直接预览播放）。
+        钉钉配置为 file 模式时直接发送文件卡片，不尝试 ffmpeg。
         """
-        if (
-            event.get_platform_name() == DINGTALK_PLATFORM
-            and shutil.which("ffmpeg") is None
-        ):
-            if await self._ensure_ffmpeg():
-                logger.info(
-                    "[%s] 已启用 pip 静态 ffmpeg，钉钉将发送原生视频消息", PLUGIN_NAME
-                )
-            else:
-                logger.info(
-                    "[%s] ffmpeg 不可用，钉钉降级为文件消息", PLUGIN_NAME
-                )
+        if event.get_platform_name() == DINGTALK_PLATFORM:
+            if self._dingtalk_send_mode() == "file":
                 return event.chain_result(
                     [File(name=_safe_file_name(video.title, video.bvid), file=str(dest))]
                 )
+            if shutil.which("ffmpeg") is None:
+                if await self._ensure_ffmpeg():
+                    logger.info(
+                        "[%s] 已启用 pip 静态 ffmpeg，钉钉将发送原生视频消息",
+                        PLUGIN_NAME,
+                    )
+                else:
+                    logger.info(
+                        "[%s] ffmpeg 不可用，钉钉降级为文件消息", PLUGIN_NAME
+                    )
+                    return event.chain_result(
+                        [
+                            File(
+                                name=_safe_file_name(video.title, video.bvid),
+                                file=str(dest),
+                            )
+                        ]
+                    )
         return event.chain_result([Video.fromFileSystem(str(dest))])
 
     # ------------------------------------------------------------------
@@ -238,6 +261,29 @@ class BiliVideoPlugin(Star):
     # ------------------------------------------------------------------
     # 指令
     # ------------------------------------------------------------------
+    @filter.command("切换发送模式", alias={"切换模式"})
+    async def toggle_send_mode_command(self, event: AstrMessageEvent) -> None:
+        """切换钉钉视频/文件发送模式，并写回插件配置。"""
+        if event.get_platform_name() != DINGTALK_PLATFORM:
+            yield self._text_result(event, "这个指令只在钉钉上使用。")
+            event.stop_event()
+            return
+
+        new_mode = "file" if self._dingtalk_send_mode() == "video" else "video"
+        self.config["dingtalk_send_mode"] = new_mode
+        try:
+            saver = getattr(self.config, "save_config_async", None)
+            if callable(saver):
+                await saver()
+            else:
+                self.config.save_config()
+        except Exception:
+            logger.exception("[%s] 保存钉钉发送模式失败", PLUGIN_NAME)
+
+        label = "文件发送模式" if new_mode == "file" else "视频发送模式"
+        yield self._text_result(event, f"已切换到{label}")
+        event.stop_event()
+
     @filter.command("刷视频", alias={"随机视频"})
     async def random_video_command(self, event: AstrMessageEvent) -> None:
         platform = event.get_platform_name()
@@ -247,7 +293,10 @@ class BiliVideoPlugin(Star):
             return
 
         umo = event.unified_msg_origin
-        max_retries, max_file_mb, cooldown, download_timeout = self._configure_client()
+        max_retries, _video_limit_mb, cooldown, download_timeout = (
+            self._configure_client()
+        )
+        max_file_mb = self._send_limit_mb(event)
         self._cleanup_temp()
 
         remaining = int(cooldown - (time.monotonic() - self._cooldowns.get(umo, 0.0)))
@@ -318,7 +367,7 @@ class BiliVideoPlugin(Star):
 
         umo = event.unified_msg_origin
         self._configure_client()
-        max_file_mb = self._int_cfg("max_file_mb", 90)
+        max_file_mb = self._send_limit_mb(event)
         download_timeout = self._int_cfg("download_timeout_seconds", 120)
         wait_seconds = self._int_cfg("wait_seconds", 60)
         cooldown = self._int_cfg("cooldown_seconds", 20)

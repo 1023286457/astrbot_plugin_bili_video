@@ -21,7 +21,20 @@
     "description": "单视频体积上限（MB）",
     "type": "int",
     "default": 90,
-    "hint": "声明体积超过上限的候选直接跳过换下一个，防止上传超时。"
+    "hint": "视频消息模式下，声明体积超过上限的候选直接跳过换下一个，防止上传超时。"
+  },
+  "max_file_send_mb": {
+    "description": "单文件视频体积上限（MB）",
+    "type": "int",
+    "default": 90,
+    "hint": "钉钉使用文件发送模式时，声明体积超过上限的候选直接跳过换下一个；与视频消息上限分开配置。"
+  },
+  "dingtalk_send_mode": {
+    "description": "钉钉发送模式",
+    "type": "string",
+    "default": "video",
+    "options": ["video", "file"],
+    "hint": "video=发送原生视频消息；file=发送 mp4 文件卡片。也可以在钉钉发送 /切换发送模式 切换并自动保存。"
   },
   "max_retries": {
     "description": "失败换片重试次数",

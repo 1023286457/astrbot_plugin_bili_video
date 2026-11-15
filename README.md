@@ -6,7 +6,7 @@
 
 **B站刷视频插件：发 `/刷视频` 从 B站热门榜随机发一个短视频，或用 `/搜视频 关键词` 搜索后按序号发送到当前会话。**
 
-[![版本 1.0.0](https://img.shields.io/badge/版本-1.0.0-89b4fa.svg)](CHANGELOG.md)
+[![版本 1.0.2](https://img.shields.io/badge/版本-1.0.2-89b4fa.svg)](CHANGELOG.md)
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![作者 简单么么熊](https://img.shields.io/badge/作者-简单么么熊-f5b7c7.svg)](https://github.com/1023286457)
 [![QQ群 1081896895](https://img.shields.io/badge/QQ群-1081896895-12B7F5.svg)](https://qm.qq.com/q/LWmwpA9kuk)
@@ -54,6 +54,7 @@ data/plugins/astrbot_plugin_bili_video
 | --- | --- |
 | `刷视频`（别名 `随机视频`） | 从热门榜随机挑一个短视频：先回复视频信息（标题/UP主/时长/播放量/链接），再发视频文件 |
 | `搜视频 关键词` | 在B站搜索关键词（支持含空格），回复编号列表（前 10 条：标题 - UP主（时长）），**回复序号**即下载发送对应视频；回复 `取消` 可放弃。与点歌插件同款交互 |
+| `切换发送模式`（别名 `切换模式`） | 仅钉钉可用：在视频发送模式和文件发送模式之间切换，自动写回配置，并回复 `已切换到文件发送模式` / `已切换到视频发送模式` |
 
 > 搜视频等待期间，该会话的新消息会被本插件接管（用于接收序号），超时后自动恢复；等待时长可在配置里调。
 
@@ -68,7 +69,9 @@ data/plugins/astrbot_plugin_bili_video
 | `max_duration_seconds` | 180 | 刷视频的时长上限（秒）；搜视频由用户自选，不受此限制 |
 | `wait_seconds` | 60 | 搜视频列表等待序号的时长 |
 | `popular_pages` | 4 | 热门榜抓取页数（每页 50 条，作为随机池） |
-| `max_file_mb` | 90 | 单视频体积上限，超限的选中视频会提示并放弃 |
+| `max_file_mb` | 90 | 单视频体积上限；视频消息模式下，超限的选中视频会提示并放弃 |
+| `max_file_send_mb` | 90 | 单文件视频体积上限；钉钉文件发送模式下独立使用，和视频消息上限分开 |
+| `dingtalk_send_mode` | `video` | 钉钉发送模式：`video` 原生视频 / `file` mp4 文件卡片；可用 `/切换发送模式` 切换 |
 | `max_retries` | 3 | 刷视频解析/下载失败时自动换片重试次数 |
 | `download_timeout_seconds` | 120 | 下载超时 |
 | `cooldown_seconds` | 20 | 同会话冷却（刷视频/搜视频共用），防止刷屏触发 QQ 频控（仅成功后计时） |
@@ -83,7 +86,7 @@ data/plugins/astrbot_plugin_bili_video
 | --- | --- |
 | QQ 官方（含 webhook） | 走官方媒体上传接口发视频，无需任何额外组件 |
 | aiocqhttp / OneBot | 原生视频消息 |
-| 钉钉 | 原生视频消息需要适配器用 ffmpeg 抽封面：**插件会自动准备 ffmpeg**（pip 依赖 `imageio-ffmpeg` 自带各平台静态 ffmpeg，装插件时自动安装，无需系统安装、无需管理员权限）；自动准备不可用时自动降级为文件消息（mp4 文件卡片，钉钉内可直接预览播放） |
+| 钉钉 | 默认发送原生视频消息，需要适配器用 ffmpeg 抽封面：**插件会自动准备 ffmpeg**（pip 依赖 `imageio-ffmpeg` 自带各平台静态 ffmpeg，装插件时自动安装，无需系统安装、无需管理员权限）；自动准备不可用时自动降级为文件消息（mp4 文件卡片，钉钉内可直接预览播放）。也可以发送 `/切换发送模式` 固定切换为文件模式 |
 
 其他平台回复「此平台暂不支持刷视频」。
 
