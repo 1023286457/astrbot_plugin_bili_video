@@ -19,7 +19,7 @@ from astrbot.core.utils.session_waiter import SessionController, session_waiter
 from .bili import BiliApiError, BiliVideo, BiliVideoClient
 
 PLUGIN_NAME = "astrbot_plugin_bili_video"
-PLUGIN_VERSION = "1.0.0"
+PLUGIN_VERSION = "1.0.1"
 SUPPORTED_PLATFORMS = {"qq_official", "qq_official_webhook", "dingtalk", "aiocqhttp"}
 DINGTALK_PLATFORM = "dingtalk"
 SEARCH_LIST_SIZE = 10
